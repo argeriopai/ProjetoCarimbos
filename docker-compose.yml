@@ -49,7 +49,6 @@ services:
 
   postgres:
     image: postgis/postgis
-    platform: linux/amd64
     environment:
       PGUSER: ${POSTGRES_USER}
       POSTGRES_USER: ${POSTGRES_USER}
@@ -74,7 +73,6 @@ services:
 
   pgadmin:
     image: dpage/pgadmin4:7
-    platform: linux/amd64
     restart: unless-stopped
     ports:
       - "${PGADMIN_PORT}:80"
@@ -89,14 +87,18 @@ services:
       - development
       - alpha
       - beta
- 
+
+
 networks:
   stack:
+    external: true
     name: meta-network
 
 volumes:
   data_pgdir:
     name: data_pgdir
+    external: true
 
   data_pgadmin:
     name: data_pgadmin
+    external: true

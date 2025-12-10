@@ -1,0 +1,122 @@
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [ uuid_ossp(map: "uuid-ossp") ]
+}
+
+model User {
+  id         String   @id @default(uuid()) @db.Uuid
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  email      String   @unique
+  username   String?
+  password   String
+  image      String?
+
+  atendente  Atendente? @relation("UserAtendente")
+  @@map("users")
+}
+
+model Atendente {
+  id         String   @id @default(uuid()) @db.Uuid
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  nome       String
+  email      String
+  user_id    String   @unique @db.Uuid
+  user       User     @relation("UserAtendente", fields: [user_id], references: [id])
+
+  pedidos    Pedido[]
+  @@map("atendentes")
+}
+
+model Cliente {
+  id         String   @id @default(uuid()) @db.Uuid
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  nome       String
+  email      String
+  senha      String
+  cpf        String   @unique
+
+  pedidos    Pedido[]
+  @@map("clientes")
+}
+
+model Pedido {
+  id           String        @id @default(uuid()) @db.Uuid
+  created_at   DateTime      @default(now())
+  updated_at   DateTime      @updatedAt
+  total        Decimal       @db.Decimal(10, 2)
+  cliente_id   String        @db.Uuid
+  atendente_id String?       @db.Uuid
+
+  cliente      Cliente       @relation(fields: [cliente_id], references: [id])
+  atendente    Atendente?    @relation(fields: [atendente_id], references: [id])
+  itens        ItemPedido[]
+  pagamentoPix PagamentoPix?
+
+  @@map("pedidos")
+}
+
+model ItemPedido {
+  id             String          @id @default(uuid()) @db.Uuid
+  created_at     DateTime        @default(now())
+  updated_at     DateTime        @updatedAt
+  quantidade     Int
+  preco_unit     Decimal         @db.Decimal(10, 2)
+  pedido_id      String          @db.Uuid
+  produto_id     String          @db.Uuid
+  personalizacao Personalizacao?
+
+  pedido         Pedido          @relation(fields: [pedido_id], references: [id])
+  produto        Produto         @relation(fields: [produto_id], references: [id])
+
+  @@map("itens_pedido")
+}
+
+model Produto {
+  id         String      @id @default(uuid()) @db.Uuid
+  created_at DateTime    @default(now())
+  updated_at DateTime    @updatedAt
+  nome       String
+  descricao  String
+  preco      Decimal     @db.Decimal(10, 2)
+  imagem     String?
+  estoque    Int
+
+  itens      ItemPedido[]
+  @@map("produtos")
+}
+
+model Personalizacao {
+  id             String     @id @default(uuid()) @db.Uuid
+  created_at     DateTime   @default(now())
+  updated_at     DateTime   @updatedAt
+  texto          String
+  fonte          String?
+  modelo         String?
+  item_pedido_id String?    @unique @db.Uuid
+
+  itemPedido     ItemPedido? @relation(fields: [item_pedido_id], references: [id])
+
+  @@map("personalizacoes")
+}
+
+model PagamentoPix {
+  id         String   @id @default(uuid()) @db.Uuid
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  qrcode     String
+  status     String
+  pedido_id  String   @unique @db.Uuid
+
+  pedido     Pedido   @relation(fields: [pedido_id], references: [id])
+
+  @@map("pagamentos_pix")
+}
